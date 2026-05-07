@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { Heart, MessageCircle, MapPin, Clock, Zap, Trash2 } from 'lucide-react'
+import { Heart, MessageCircle, MapPin, Clock, Zap } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -13,22 +12,18 @@ interface DriftCardProps {
   post: DriftPostWithDetails
   currentUserId: string
   onInteract: (type: 'like' | 'respond') => void
-  onDelete?: (postId: string) => void
   interacting?: boolean
   interactionLocked?: boolean
-  deleting?: boolean
 }
 
-export function DriftCard({ post, currentUserId, onInteract, onDelete, interacting, interactionLocked, deleting }: DriftCardProps) {
-  const isOwnPost = post.userId === currentUserId
-  const [confirmDelete, setConfirmDelete] = useState(false)
+export function DriftCard({ post, currentUserId, onInteract, interacting, interactionLocked }: DriftCardProps) {
   const isExpiringSoon = new Date(post.expiresAt) < new Date(Date.now() + 2 * 60 * 60 * 1000)
   const hasInteracted = post.interactions.some((i) => i.userId === currentUserId)
   const interactionType = post.interactions.find((i) => i.userId === currentUserId)?.type
   const likeCount = post.interactions.filter((i) => i.type === 'like').length
 
   return (
-    <article className={cn('drift-card p-4 group', isOwnPost && 'border-rose-200/40 bg-rose-50/5')}>
+    <article className="drift-card p-4 group">
       {/* Header */}
       <div className="flex items-start gap-3">
         <Avatar
@@ -41,10 +36,7 @@ export function DriftCard({ post, currentUserId, onInteract, onDelete, interacti
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-semibold text-sm truncate">{post.user.name}</span>
-              {isOwnPost && (
-                <span className="text-xs text-rose-400/80 font-medium">· Your drift</span>
-              )}
-              {!isOwnPost && post.user.gender && (
+              {post.user.gender && (
                 <span className="text-xs text-muted-foreground hidden sm:block">
                   {post.user.gender}
                 </span>
@@ -137,45 +129,7 @@ export function DriftCard({ post, currentUserId, onInteract, onDelete, interacti
 
         {/* Actions */}
         <div className="flex items-center gap-2 mt-3">
-          {isOwnPost ? (
-            // Own post — show delete controls
-            confirmDelete ? (
-              <>
-                <span className="text-xs text-muted-foreground mr-1">Delete this drift?</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onDelete?.(post.id)}
-                  disabled={deleting}
-                  className="gap-1.5 h-8 rounded-full text-xs border-red-400/60 text-red-500 hover:bg-red-50"
-                >
-                  <Trash2 size={12} />
-                  {deleting ? 'Deleting…' : 'Yes, delete'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setConfirmDelete(false)}
-                  disabled={deleting}
-                  className="h-8 rounded-full text-xs"
-                >
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setConfirmDelete(true)}
-                className="gap-1.5 h-8 rounded-full text-xs text-muted-foreground hover:text-red-500 hover:border-red-300"
-              >
-                <Trash2 size={12} />
-                Delete
-              </Button>
-            )
-          ) : (
-            // Other's post — show like/respond
-            <>
+          {(
               <Button
                 variant={interactionType === 'like' ? 'primary' : 'outline'}
                 size="sm"
@@ -204,8 +158,7 @@ export function DriftCard({ post, currentUserId, onInteract, onDelete, interacti
                   {interactionType === 'like' ? '✓ Liked' : '✓ Responded'}
                 </span>
               )}
-            </>
-          )}
+            </>)}
         </div>
       </div>
     </article>

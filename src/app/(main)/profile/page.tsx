@@ -4,15 +4,25 @@ import { useState, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { LogOut, Edit3, Save, X, MapPin, Ruler, Calendar, Camera, Upload } from 'lucide-react'
+import { LogOut, Edit3, Save, X, MapPin, Ruler, Calendar, Camera, Upload, Trash2, Clock } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { TagInput } from '@/components/ui/TagInput'
-import { calculateAge, formatTimeAgo } from '@/lib/utils'
+import { calculateAge, formatTimeAgo, formatCountdown } from '@/lib/utils'
 import { HOBBY_OPTIONS, INTEREST_OPTIONS, LIKE_OPTIONS, DISLIKE_OPTIONS } from '@/types'
 import type { UserWithPreferences } from '@/types'
+
+interface MyDriftPost {
+  id: string
+  content: string
+  emoji?: string | null
+  imageUrl?: string | null
+  createdAt: string
+  expiresAt: string
+  interactions: { type: string }[]
+}
 
 async function fetchMe(): Promise<UserWithPreferences & { age: number }> {
   const res = await fetch('/api/users/me')
@@ -57,9 +67,24 @@ export default function ProfilePage() {
   const [avatarUploading, setAvatarUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // My Drifts edit state: postId -> { content, emoji }
+  const [driftEditing, setDriftEditing] = useState<Record<string, { content: string; emoji: string }>>({})
+  const [driftConfirmDelete, setDriftConfirmDelete] = useState<string | null>(null)
+
   const { data: user, isPending } = useQuery({
     queryKey: ['me'],
     queryFn: fetchMe,
+  })
+
+  const { data: myDrifts, isPending: driftsPending } = useQuery<MyDriftPost[]>({
+    queryKey: ['myDrifts'],
+    queryFn: async () => {
+      const res = await fetch('/api/drift-posts')
+      if (!res.ok) throw new Error('Failed')
+      return (await res.json()).posts as MyDriftPost[]
+    },
+    enabled: !!session?.user?.id,
+    staleTime: 30_000,
   })
 
   const startEdit = () => {
@@ -134,6 +159,38 @@ export default function ProfilePage() {
       toast.success('Profile updated!')
       setEditing(false)
       void queryClient.invalidateQueries({ queryKey: ['me'] })
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  const driftEditMutation = useMutation({
+    mutationFn: async ({ id, content, emoji }: { id: string; content: string; emoji: string }) => {
+      const res = await fetch(`/api/drift-posts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, emoji: emoji || undefined }),
+      })
+      if (!res.ok) throw new Error('Failed to update drift')
+    },
+    onSuccess: (_data, { id }) => {
+      toast.success('Drift updated!')
+      setDriftEditing((prev) => { const n = { ...prev }; delete n[id]; return n })
+      void queryClient.invalidateQueries({ queryKey: ['myDrifts'] })
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  const driftDeleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/drift-posts/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete drift')
+    },
+    onSuccess: (_data, id) => {
+      toast.success('Drift deleted')
+      setDriftConfirmDelete(null)
+      queryClient.setQueryData<MyDriftPost[]>(['myDrifts'], (old) =>
+        old ? old.filter((p) => p.id !== id) : []
+      )
     },
     onError: (err: Error) => toast.error(err.message),
   })
@@ -361,6 +418,154 @@ export default function ProfilePage() {
             <span className="text-gray-600">{formatTimeAgo(user.createdAt)}</span>
           </div>
         </div>
+      </div>
+
+      {/* My Drifts */}
+      <div className="drift-card p-5">
+        <h3 className="font-semibold text-sm mb-3">My Drifts</h3>
+        {driftsPending ? (
+          <div className="space-y-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="animate-pulse h-16 rounded-xl bg-gray-100" />
+            ))}
+          </div>
+        ) : !myDrifts?.length ? (
+          <p className="text-sm text-muted-foreground italic">You haven&apos;t posted any drifts yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {myDrifts.map((post) => {
+              const editState = driftEditing[post.id]
+              const isEditing = !!editState
+              const isDeleting = driftDeleteMutation.isPending && driftDeleteMutation.variables === post.id
+              const isSaving = driftEditMutation.isPending && (driftEditMutation.variables as { id: string } | undefined)?.id === post.id
+              const isExpiringSoon = new Date(post.expiresAt) < new Date(Date.now() + 2 * 60 * 60 * 1000)
+              const likeCount = post.interactions.filter((i) => i.type === 'like').length
+              const respondCount = post.interactions.filter((i) => i.type === 'respond').length
+
+              return (
+                <div key={post.id} className="rounded-xl border border-white/10 bg-white/3 p-4 space-y-3">
+                  {/* Post meta */}
+                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span>{formatTimeAgo(post.createdAt)}</span>
+                    <div className="flex items-center gap-2">
+                      {likeCount > 0 && <span>❤ {likeCount}</span>}
+                      {respondCount > 0 && <span>💬 {respondCount}</span>}
+                      {isExpiringSoon && (
+                        <span className="flex items-center gap-1 text-amber-500">
+                          <Clock size={10} />
+                          {formatCountdown(post.expiresAt)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Content — view or edit */}
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={editState.emoji}
+                          onChange={(e) => setDriftEditing((prev) => ({ ...prev, [post.id]: { ...prev[post.id], emoji: e.target.value } }))}
+                          placeholder="😊"
+                          maxLength={2}
+                          className="w-12 text-center rounded-lg border border-white/20 bg-white/5 text-sm px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-rose-400"
+                        />
+                        <textarea
+                          value={editState.content}
+                          onChange={(e) => setDriftEditing((prev) => ({ ...prev, [post.id]: { ...prev[post.id], content: e.target.value } }))}
+                          maxLength={200}
+                          rows={3}
+                          className="flex-1 rounded-xl border border-white/20 bg-white/5 text-sm px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-rose-400"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => driftEditMutation.mutate({ id: post.id, content: editState.content, emoji: editState.emoji })}
+                          loading={isSaving}
+                          className="gap-1.5 h-8 text-xs"
+                        >
+                          <Save size={11} /> Save
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDriftEditing((prev) => { const n = { ...prev }; delete n[post.id]; return n })}
+                          disabled={isSaving}
+                          className="h-8 text-xs"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm leading-relaxed">
+                      {post.emoji && <span className="mr-1">{post.emoji}</span>}
+                      {post.content}
+                    </p>
+                  )}
+
+                  {/* Attached image */}
+                  {post.imageUrl && !isEditing && (
+                    <div className="rounded-xl overflow-hidden border border-white/10">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={post.imageUrl} alt="Drift attachment" className="w-full h-auto object-contain" loading="lazy" />
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  {!isEditing && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDriftEditing((prev) => ({ ...prev, [post.id]: { content: post.content, emoji: post.emoji ?? '' } }))}
+                        className="gap-1.5 h-8 text-xs"
+                      >
+                        <Edit3 size={11} /> Edit
+                      </Button>
+
+                      {driftConfirmDelete === post.id ? (
+                        <>
+                          <span className="text-xs text-muted-foreground">Delete this drift?</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => driftDeleteMutation.mutate(post.id)}
+                            disabled={isDeleting}
+                            className="gap-1.5 h-8 text-xs border-red-400/60 text-red-500 hover:bg-red-50"
+                          >
+                            <Trash2 size={11} />
+                            {isDeleting ? 'Deleting…' : 'Yes, delete'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDriftConfirmDelete(null)}
+                            disabled={isDeleting}
+                            className="h-8 text-xs"
+                          >
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDriftConfirmDelete(post.id)}
+                          className="gap-1.5 h-8 text-xs text-muted-foreground hover:text-red-500"
+                        >
+                          <Trash2 size={11} /> Delete
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
