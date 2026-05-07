@@ -129,36 +129,36 @@ export function DriftCard({ post, currentUserId, onInteract, interacting, intera
 
         {/* Actions */}
         <div className="flex items-center gap-2 mt-3">
-          {(
-              <Button
-                variant={interactionType === 'like' ? 'primary' : 'outline'}
-                size="sm"
-                onClick={() => onInteract('like')}
-                disabled={interacting || hasInteracted || interactionLocked}
-                className={cn('gap-1.5 h-8 rounded-full text-xs', interactionType === 'like' && 'glow-primary')}
-              >
-                <Heart size={13} fill={interactionType === 'like' ? 'currentColor' : 'none'} />
-                {likeCount > 0 ? likeCount : ''}
-                {interactionType === 'like' ? 'Liked' : 'Like'}
-              </Button>
+          <>
+            <Button
+              variant={interactionType === 'like' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => onInteract('like')}
+              disabled={interacting || hasInteracted || interactionLocked}
+              className={cn('gap-1.5 h-8 rounded-full text-xs', interactionType === 'like' && 'glow-primary')}
+            >
+              <Heart size={13} fill={interactionType === 'like' ? 'currentColor' : 'none'} />
+              {likeCount > 0 ? likeCount : ''}
+              {interactionType === 'like' ? 'Liked' : 'Like'}
+            </Button>
 
-              <Button
-                variant={interactionType === 'respond' ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => onInteract('respond')}
-                disabled={interacting || hasInteracted || interactionLocked}
-                className="gap-1.5 h-8 rounded-full text-xs"
-              >
-                <MessageCircle size={13} />
-                Respond
-              </Button>
+            <Button
+              variant={interactionType === 'respond' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => onInteract('respond')}
+              disabled={interacting || hasInteracted || interactionLocked}
+              className="gap-1.5 h-8 rounded-full text-xs"
+            >
+              <MessageCircle size={13} />
+              Respond
+            </Button>
 
-              {hasInteracted && (
-                <span className="text-xs text-muted-foreground ml-auto">
-                  {interactionType === 'like' ? '✓ Liked' : '✓ Responded'}
-                </span>
-              )}
-            </>)}
+            {hasInteracted && (
+              <span className="text-xs text-muted-foreground ml-auto">
+                {interactionType === 'like' ? '✓ Liked' : '✓ Responded'}
+              </span>
+            )}
+          </>
         </div>
       </div>
     </article>
