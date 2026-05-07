@@ -69,6 +69,24 @@ export default function DriftFeed() {
 
   const { connected } = useDriftFeed(onNewPost)
 
+  const deleteMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      const res = await fetch(`/api/drift-posts/${postId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const d = await res.json()
+        throw new Error(d.error ?? 'Failed to delete')
+      }
+      return res.json()
+    },
+    onSuccess: (_data, postId) => {
+      queryClient.setQueryData<DriftPostWithDetails[]>(['feed'], (old) =>
+        old ? old.filter((p) => p.id !== postId) : []
+      )
+      toast.success('Drift deleted')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
   const interactMutation = useMutation({
     mutationFn: async ({ postId, type }: { postId: string; type: 'like' | 'respond' }) => {
       const res = await fetch(`/api/drift-posts/${postId}/interact`, {
@@ -95,7 +113,6 @@ export default function DriftFeed() {
   const hasPhoto = !!(me?.avatar ?? session?.user?.image)
 
   const filteredPosts = (posts ?? [])
-    .filter((p) => p.userId !== session?.user.id)
     .filter((p) => {
       if (filter === 'nearby') return p.distanceKm !== undefined && p.distanceKm <= 50
       return true
@@ -245,8 +262,10 @@ export default function DriftFeed() {
               }
               interactMutation.mutate({ postId: post.id, type })
             }}
+            onDelete={(postId) => deleteMutation.mutate(postId)}
             interacting={interactMutation.isPending}
             interactionLocked={!hasPhoto}
+            deleting={deleteMutation.isPending && deleteMutation.variables === post.id}
           />
         ))
       )}

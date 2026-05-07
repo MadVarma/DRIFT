@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { Heart, MessageCircle, MapPin, Clock, Zap } from 'lucide-react'
+import { Heart, MessageCircle, MapPin, Clock, Zap, Trash2 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -12,18 +13,22 @@ interface DriftCardProps {
   post: DriftPostWithDetails
   currentUserId: string
   onInteract: (type: 'like' | 'respond') => void
+  onDelete?: (postId: string) => void
   interacting?: boolean
   interactionLocked?: boolean
+  deleting?: boolean
 }
 
-export function DriftCard({ post, currentUserId, onInteract, interacting, interactionLocked }: DriftCardProps) {
+export function DriftCard({ post, currentUserId, onInteract, onDelete, interacting, interactionLocked, deleting }: DriftCardProps) {
+  const isOwnPost = post.userId === currentUserId
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const isExpiringSoon = new Date(post.expiresAt) < new Date(Date.now() + 2 * 60 * 60 * 1000)
   const hasInteracted = post.interactions.some((i) => i.userId === currentUserId)
   const interactionType = post.interactions.find((i) => i.userId === currentUserId)?.type
   const likeCount = post.interactions.filter((i) => i.type === 'like').length
 
   return (
-    <article className="drift-card p-4 group">
+    <article className={cn('drift-card p-4 group', isOwnPost && 'border-rose-200/40 bg-rose-50/5')}>
       {/* Header */}
       <div className="flex items-start gap-3">
         <Avatar
@@ -36,7 +41,10 @@ export function DriftCard({ post, currentUserId, onInteract, interacting, intera
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-semibold text-sm truncate">{post.user.name}</span>
-              {post.user.gender && (
+              {isOwnPost && (
+                <span className="text-xs text-rose-400/80 font-medium">· Your drift</span>
+              )}
+              {!isOwnPost && post.user.gender && (
                 <span className="text-xs text-muted-foreground hidden sm:block">
                   {post.user.gender}
                 </span>
@@ -129,33 +137,74 @@ export function DriftCard({ post, currentUserId, onInteract, interacting, intera
 
         {/* Actions */}
         <div className="flex items-center gap-2 mt-3">
-          <Button
-            variant={interactionType === 'like' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => onInteract('like')}
-            disabled={interacting || hasInteracted || interactionLocked}
-            className={cn('gap-1.5 h-8 rounded-full text-xs', interactionType === 'like' && 'glow-primary')}
-          >
-            <Heart size={13} fill={interactionType === 'like' ? 'currentColor' : 'none'} />
-            {likeCount > 0 ? likeCount : ''}
-            {interactionType === 'like' ? 'Liked' : 'Like'}
-          </Button>
+          {isOwnPost ? (
+            // Own post — show delete controls
+            confirmDelete ? (
+              <>
+                <span className="text-xs text-muted-foreground mr-1">Delete this drift?</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDelete?.(post.id)}
+                  disabled={deleting}
+                  className="gap-1.5 h-8 rounded-full text-xs border-red-400/60 text-red-500 hover:bg-red-50"
+                >
+                  <Trash2 size={12} />
+                  {deleting ? 'Deleting…' : 'Yes, delete'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={deleting}
+                  className="h-8 rounded-full text-xs"
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmDelete(true)}
+                className="gap-1.5 h-8 rounded-full text-xs text-muted-foreground hover:text-red-500 hover:border-red-300"
+              >
+                <Trash2 size={12} />
+                Delete
+              </Button>
+            )
+          ) : (
+            // Other's post — show like/respond
+            <>
+              <Button
+                variant={interactionType === 'like' ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => onInteract('like')}
+                disabled={interacting || hasInteracted || interactionLocked}
+                className={cn('gap-1.5 h-8 rounded-full text-xs', interactionType === 'like' && 'glow-primary')}
+              >
+                <Heart size={13} fill={interactionType === 'like' ? 'currentColor' : 'none'} />
+                {likeCount > 0 ? likeCount : ''}
+                {interactionType === 'like' ? 'Liked' : 'Like'}
+              </Button>
 
-          <Button
-            variant={interactionType === 'respond' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => onInteract('respond')}
-            disabled={interacting || hasInteracted || interactionLocked}
-            className="gap-1.5 h-8 rounded-full text-xs"
-          >
-            <MessageCircle size={13} />
-            Respond
-          </Button>
+              <Button
+                variant={interactionType === 'respond' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => onInteract('respond')}
+                disabled={interacting || hasInteracted || interactionLocked}
+                className="gap-1.5 h-8 rounded-full text-xs"
+              >
+                <MessageCircle size={13} />
+                Respond
+              </Button>
 
-          {hasInteracted && (
-            <span className="text-xs text-muted-foreground ml-auto">
-              {interactionType === 'like' ? '✓ Liked' : '✓ Responded'}
-            </span>
+              {hasInteracted && (
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {interactionType === 'like' ? '✓ Liked' : '✓ Responded'}
+                </span>
+              )}
+            </>
           )}
         </div>
       </div>
