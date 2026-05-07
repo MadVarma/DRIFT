@@ -97,7 +97,7 @@ export function DriftCard({ post, currentUserId, onInteract, interacting, intera
             <img
               src={post.imageUrl}
               alt="Post attachment"
-              className="w-full max-h-80 object-cover"
+              className="w-full h-auto object-contain"
               loading="lazy"
             />
           </div>
