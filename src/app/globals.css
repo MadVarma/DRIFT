@@ -1,0 +1,220 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 330 50% 99%;
+    --surface: 330 35% 97%;
+    --card: 0 0% 100%;
+    --primary: 330 82% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 330 25% 93%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 10%;
+    --muted: 330 25% 94%;
+    --muted-foreground: 330 12% 42%;
+    --border: 330 28% 88%;
+    --destructive: 0 80% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --foreground: 330 35% 10%;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    /* Heart cursor */
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.593c-5.63-5.539-11-10.297-11-14.402C1 4.144 2.992 2 6.007 2c1.951 0 3.817 1.038 4.993 2.628C12.18 3.038 14.045 2 15.994 2 19.012 2 21 4.148 21 7.191c0 4.106-5.367 8.863-9 12.402z' fill='%23ec4899' stroke='%23db2777' stroke-width='0.5'/%3E%3C/svg%3E") 12 12, pointer;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: hsl(var(--foreground));
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 100px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(236,72,153,0.35);
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: rgba(236,72,153,0.2);
+    color: hsl(var(--foreground));
+  }
+
+  /* Focus ring */
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(236, 72, 153, 0.18);
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-purple-400 via-violet-400 to-amber-400 bg-clip-text text-transparent;
+  }
+
+  .drift-card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(236, 72, 153, 0.14);
+    border-radius: 1rem;
+    box-shadow: 0 2px 20px rgba(236, 72, 153, 0.06), 0 1px 4px rgba(0,0,0,0.04);
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .drift-card:hover {
+    border-color: rgba(236, 72, 153, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(236, 72, 153, 0.1), 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .tag {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .tag-like {
+    @apply tag bg-emerald-500/10 text-emerald-400 border border-emerald-500/20;
+  }
+
+  .tag-dislike {
+    @apply tag bg-rose-500/10 text-rose-400 border border-rose-500/20;
+  }
+
+  .tag-hobby {
+    @apply tag bg-violet-100 text-violet-700 border border-violet-200;
+  }
+
+  .tag-interest {
+    @apply tag bg-amber-100 text-amber-700 border border-amber-200;
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 30%), 0 0 40px hsl(var(--primary) / 10%);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* ── Shared theme utilities ─────────────────────────────────────── */
+  .shimmer-text {
+    background: linear-gradient(90deg, #f472b6, #ec4899, #db2777, #f9a8d4, #ec4899, #f472b6);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 4s linear infinite;
+  }
+
+  .gradient-bg-animated {
+    background: linear-gradient(-45deg, #fffbfe, #fef0f7, #fff9fb, #fdf4ff, #fff5f9, #fffbfe);
+    background-size: 400% 400%;
+    animation: gradientShift 14s ease infinite;
+  }
+
+  .pink-glow {
+    box-shadow: 0 0 30px rgba(236, 72, 153, 0.4), 0 0 60px rgba(236, 72, 153, 0.15);
+  }
+
+  /* Elegant DRIFT wordmark */
+  .drift-logo {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: italic;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    color: #9f1239;
+    text-decoration: none;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* ── Global keyframes ───────────────────────────────────────────────── */
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0px) scale(1); }
+  33%       { transform: translate(-50%, -50%) translateY(-28px) scale(1.04); }
+  66%       { transform: translate(-50%, -50%) translateY(14px) scale(0.97); }
+}
+
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes ripple {
+  0%   { transform: scale(0); opacity: 0.5; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.2); }
+}
+
+@keyframes doodleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes doodleSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
