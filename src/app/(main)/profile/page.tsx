@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { LogOut, Edit3, Save, X, MapPin, Ruler, Calendar, Camera, Upload, Trash2, Clock } from 'lucide-react'
+import { LogOut, Edit3, Save, X, MapPin, Ruler, Calendar, Camera, Upload, Trash2, Clock, AlertTriangle } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -70,6 +70,7 @@ export default function ProfilePage() {
   // My Drifts edit state: postId -> { content, emoji }
   const [driftEditing, setDriftEditing] = useState<Record<string, { content: string; emoji: string }>>({})
   const [driftConfirmDelete, setDriftConfirmDelete] = useState<string | null>(null)
+  const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false)
 
   const { data: user, isPending } = useQuery({
     queryKey: ['me'],
@@ -192,6 +193,15 @@ export default function ProfilePage() {
         old ? old.filter((p) => p.id !== id) : []
       )
     },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/users/me', { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete account')
+    },
+    onSuccess: () => signOut({ callbackUrl: '/' }),
     onError: (err: Error) => toast.error(err.message),
   })
 
@@ -418,6 +428,52 @@ export default function ProfilePage() {
             <span className="text-gray-600">{formatTimeAgo(user.createdAt)}</span>
           </div>
         </div>
+      </div>
+
+      {/* Danger zone */}
+      <div className="drift-card p-5">
+        <h3 className="font-semibold text-sm mb-3 text-red-500">Danger zone</h3>
+        {confirmDeleteAccount ? (
+          <div className="space-y-3">
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200">
+              <AlertTriangle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-red-700 leading-relaxed">
+                This will permanently delete your account, all your drifts, matches, and messages. <strong>This cannot be undone.</strong>
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => deleteAccountMutation.mutate()}
+                loading={deleteAccountMutation.isPending}
+                className="gap-1.5 h-8 text-xs border-red-400/60 text-red-500 hover:bg-red-50"
+              >
+                <Trash2 size={11} />
+                {deleteAccountMutation.isPending ? 'Deleting…' : 'Yes, delete my account'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmDeleteAccount(false)}
+                disabled={deleteAccountMutation.isPending}
+                className="h-8 text-xs"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setConfirmDeleteAccount(true)}
+            className="gap-1.5 h-8 text-xs text-red-500 hover:bg-red-50 hover:text-red-600"
+          >
+            <Trash2 size={11} />
+            Delete my account
+          </Button>
+        )}
       </div>
 
       {/* My Drifts */}
