@@ -277,7 +277,7 @@ export default function LandingClient() {
 
   // ── Entrance animation ────────────────────────────────────────────────────
   useEffect(() => {
-    const t = setTimeout(() => setHeroVisible(true), 100)
+    const t = setTimeout(() => setHeroVisible(true), 80)
     return () => clearTimeout(t)
   }, [])
 
