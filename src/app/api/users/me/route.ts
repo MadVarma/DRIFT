@@ -29,6 +29,28 @@ export async function GET() {
   })
 }
 
+export async function DELETE() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const id = session.user.id
+    // Delete in dependency order to avoid FK violations
+    await supabase.from('Message').delete().or(`senderId.eq.${id},receiverId.eq.${id}`)
+    await supabase.from('Interaction').delete().eq('userId', id)
+    await supabase.from('Match').delete().or(`user1Id.eq.${id},user2Id.eq.${id}`)
+    await supabase.from('DriftPost').delete().eq('userId', id)
+    await supabase.from('UserPreferences').delete().eq('userId', id)
+    await supabase.from('User').delete().eq('id', id)
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('[DELETE /api/users/me]', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user.id) {
