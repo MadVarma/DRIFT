@@ -110,7 +110,7 @@ export default function MatchesList() {
                       {match.lastMessage.content}
                     </p>
                     <span className="text-[10px] text-muted-foreground/60 flex-shrink-0 ml-1">
-                      {formatTimeAgo(match.lastMessage.createdAt as string)}
+                      {formatTimeAgo(match.lastMessage.createdAt as unknown as string)}
                     </span>
                   </div>
                 ) : (

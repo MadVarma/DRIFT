@@ -451,7 +451,7 @@ export default function LandingClient() {
             </div>
 
             <p className="text-lg sm:text-xl mb-12 max-w-2xl mx-auto leading-relaxed font-light" style={{ color: 'rgba(30,5,18,0.5)' }}>
-              Match with people who share what you love — and what you can't stand.
+              Match with people who share what you love — and what you can&apos;t stand.
               Live activity feed. Temporary matches. Real-world sparks.
             </p>
 
@@ -574,7 +574,7 @@ export default function LandingClient() {
             <Link href="/register"
               className="inline-flex items-center gap-3 px-12 py-5 rounded-full font-black text-xl text-white transition-all hover:scale-105 active:scale-95"
               style={{ background: 'linear-gradient(135deg, #f472b6, #ec4899, #db2777)', boxShadow: '0 0 60px rgba(236,72,153,0.5), 0 0 120px rgba(236,72,153,0.2)' }}>
-              Get started — it's free
+              Get started — it&apos;s free
               <ArrowRight size={22} />
             </Link>
           </div>
