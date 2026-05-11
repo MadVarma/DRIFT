@@ -1,5 +1,5 @@
 import { Avatar } from '@/components/ui/Avatar'
-import { formatTimeAgo, cn } from '@/lib/utils'
+import { formatTimeIST, cn } from '@/lib/utils'
 import type { MessageWithSender } from '@/types'
 
 interface MessageBubbleProps {
@@ -39,7 +39,7 @@ export function MessageBubble({ message, isOwn, showAvatar = true }: MessageBubb
           {message.content}
         </div>
         <span className="text-[10px] text-muted-foreground/50 mt-1 px-1">
-          {formatTimeAgo(message.createdAt)}
+          {formatTimeIST(message.createdAt)}
         </span>
       </div>
     </div>

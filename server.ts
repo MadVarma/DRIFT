@@ -48,6 +48,12 @@ app.prepare().then(() => {
       void socket.leave(`match:${matchId}`)
     })
 
+    socket.on('join-user-room', (userId: string) => {
+      // Each user joins their own private room so match-created and other
+      // per-user events (emitted via emitMatchCreated) are received.
+      void socket.join(`user:${userId}`)
+    })
+
     socket.on('join-feed', () => {
       void socket.join('drift-feed')
     })
