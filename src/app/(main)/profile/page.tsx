@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { TagInput } from '@/components/ui/TagInput'
-import { calculateAge, formatTimeAgo, formatCountdown } from '@/lib/utils'
+import { calculateAge, formatExactIST, formatCountdown } from '@/lib/utils'
 import { HOBBY_OPTIONS, INTEREST_OPTIONS, LIKE_OPTIONS, DISLIKE_OPTIONS } from '@/types'
 import type { UserWithPreferences } from '@/types'
 
@@ -425,7 +425,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex justify-between">
             <span>Member since</span>
-            <span className="text-gray-600">{formatTimeAgo(user.createdAt)}</span>
+            <span className="text-gray-600">{formatExactIST(user.createdAt)}</span>
           </div>
         </div>
       </div>
@@ -502,7 +502,7 @@ export default function ProfilePage() {
                 <div key={post.id} className="rounded-xl border border-white/10 bg-white/3 p-4 space-y-3">
                   {/* Post meta */}
                   <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                    <span>{formatTimeAgo(post.createdAt)}</span>
+                    <span>{formatExactIST(post.createdAt)}</span>
                     <div className="flex items-center gap-2">
                       {likeCount > 0 && <span>❤ {likeCount}</span>}
                       {respondCount > 0 && <span>💬 {respondCount}</span>}

@@ -108,8 +108,9 @@ export default function ChatWindow({ matchId }: ChatWindowProps) {
         if (old.some((m) => m.id === data.message.id)) return old
         return [...old, data.message]
       })
-      // Emit via socket for real-time
-      socket?.emit('send-message', { matchId, message: data.message })
+      // The API route already calls emitNewMessage() server-side, which broadcasts
+      // the new-message socket event to everyone in the match room (including the
+      // sender). No need to emit again from the client.
     },
     onError: (err: Error) => toast.error(err.message),
   })

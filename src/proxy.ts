@@ -1,11 +1,29 @@
 import { NextResponse } from 'next/server'
 import { withAuth } from 'next-auth/middleware'
 
+const ADMIN_COOKIE = 'drift_admin_session'
+const ADMIN_TOKEN = process.env.ADMIN_SESSION_TOKEN ?? 'drift-admin-secret-2026'
+
 export default withAuth(
   function middleware(req) {
     const { pathname } = req.nextUrl
     const token = req.nextauth.token
 
+    // ── Admin routes ────────────────────────────────────────────────────────
+    if (pathname.startsWith('/admin')) {
+      // Login page is always accessible
+      if (pathname.startsWith('/admin/login')) return NextResponse.next()
+      // Admin API routes checked server-side; let them pass here
+      if (pathname.startsWith('/api/admin')) return NextResponse.next()
+      // All other /admin/* pages require the admin session cookie
+      const adminCookie = req.cookies.get(ADMIN_COOKIE)
+      if (!adminCookie || adminCookie.value !== ADMIN_TOKEN) {
+        return NextResponse.redirect(new URL('/admin/login', req.url))
+      }
+      return NextResponse.next()
+    }
+
+    // ── Normal app routes ───────────────────────────────────────────────────
     // Redirect authenticated users away from auth pages
     if (token && (pathname === '/login' || pathname === '/register')) {
       return NextResponse.redirect(new URL('/feed', req.url))
@@ -28,6 +46,10 @@ export default withAuth(
     callbacks: {
       authorized({ token, req }) {
         const { pathname } = req.nextUrl
+        // Admin routes bypass NextAuth entirely
+        if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+          return true
+        }
         // Public routes
         if (
           pathname === '/' ||

@@ -104,10 +104,15 @@ export default function MatchesList() {
 
                 {/* Last message */}
                 {match.lastMessage ? (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {match.lastMessage.senderId === session?.user.id ? 'You: ' : ''}
-                    {match.lastMessage.content}
-                  </p>
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-xs text-muted-foreground truncate flex-1">
+                      {match.lastMessage.senderId === session?.user.id ? 'You: ' : ''}
+                      {match.lastMessage.content}
+                    </p>
+                    <span className="text-[10px] text-muted-foreground/60 flex-shrink-0 ml-1">
+                      {formatTimeAgo(match.lastMessage.createdAt as unknown as string)}
+                    </span>
+                  </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">Say something before time runs out!</p>
                 )}
